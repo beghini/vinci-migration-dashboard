@@ -63,6 +63,24 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 .modal-input:focus{border-color:var(--blue-mid);}
 .modal-btn{width:100%;padding:10px;background:var(--blue);color:white;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;}
 
+/* LOGIN */
+.login-screen{min-height:100vh;background:var(--blue);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.login-card{background:var(--surface);border-radius:12px;padding:40px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.3);}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.login-logo{width:36px;height:36px;background:var(--orange);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.login-logo svg{width:20px;height:20px;fill:white;}
+.login-brand-text{display:flex;flex-direction:column;}
+.login-brand-title{font-size:14px;font-weight:600;color:var(--ink);}
+.login-brand-sub{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;}
+.login-heading{font-size:20px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--ink-3);margin-bottom:24px;line-height:1.5;}
+.login-label{font-size:12px;font-weight:500;color:var(--ink-2);margin-bottom:6px;display:block;}
+.login-input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:6px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--ink);outline:none;margin-bottom:16px;}
+.login-input:focus{border-color:var(--blue-mid);}
+.login-btn{width:100%;padding:11px;background:var(--blue);color:white;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity 0.15s;}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.login-error{font-size:13px;color:var(--orange);margin-top:10px;text-align:center;}
+
 /* SIDEBAR */
 .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
 .nav-section-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);padding:16px 16px 6px;margin-top:4px;}
@@ -1613,6 +1631,57 @@ const AlertasView = () => {
   );
 };
 
+const LoginScreen = ({onLogin}) => {
+  const [email, setEmail]     = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+
+  const handleSubmit = async () => {
+    const trimmed = email.trim().toLowerCase();
+    if(!trimmed || !sb) return;
+    setLoading(true);
+    setError('');
+    const {data, error: err} = await sb.from('allowed_users').select('name,email').eq('email', trimmed).maybeSingle();
+    if(err || !data){
+      setError('E-mail não autorizado. Solicite acesso ao administrador.');
+    } else {
+      onLogin({email: data.email, name: data.name});
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="login-screen">
+      <div style={{marginBottom:24,display:'flex',alignItems:'center',gap:12,opacity:0.75}}>
+        <img src="logo_totvs_branco.png" alt="TOTVS" style={{height:26,display:'block'}}/>
+        <span style={{width:1,height:18,background:'rgba(255,255,255,0.4)',display:'inline-block'}}></span>
+        <span style={{fontSize:11,color:'white',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans,sans-serif'}}>Sudeste Meridional</span>
+      </div>
+      <div className="login-card">
+        <div className="login-brand">
+          <div className="login-logo">
+            <svg viewBox="0 0 16 16"><path d="M2 2h12v2H8v10H6V4H2z"/></svg>
+          </div>
+          <div className="login-brand-text">
+            <div className="login-brand-title">Vinci Highways Brasil</div>
+            <div className="login-brand-sub">Dossiê de Migração · TOTVS Cloud</div>
+          </div>
+        </div>
+        <div className="login-heading">Acesso Restrito</div>
+        <div className="login-sub">Digite o e-mail cadastrado para acessar o dashboard de migração.</div>
+        <label className="login-label">E-mail</label>
+        <input className="login-input" type="email" placeholder="seu@email.com.br"
+          value={email} onChange={e=>{setEmail(e.target.value);setError('');}}
+          onKeyDown={e=>e.key==='Enter'&&!loading&&handleSubmit()} autoFocus />
+        <button className="login-btn" onClick={handleSubmit} disabled={loading||!email.trim()}>
+          {loading ? 'Verificando...' : 'Entrar'}
+        </button>
+        {error && <div className="login-error">{error}</div>}
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [activeView, setActiveView] = useState('overview');
   const [catalogModule, setCatalogModule] = useState('');
@@ -1622,10 +1691,10 @@ const App = () => {
   const [decisions, setDecisions] = useState(()=>{
     try { return JSON.parse(localStorage.getItem('vinci_decisions')||'{}'); } catch(e) { return {}; }
   });
-  const [userName, setUserName]       = useState(()=> localStorage.getItem('vinci_username')||'');
-  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [currentUser, setCurrentUser] = useState(()=>{
+    try { return JSON.parse(localStorage.getItem('vinci_session')||'null'); } catch(e) { return null; }
+  });
   const [syncStatus, setSyncStatus]   = useState('idle'); // 'idle'|'syncing'|'ok'|'error'
-  const [nameInput, setNameInput]     = useState('');
 
   // Persiste decisões no localStorage sempre que mudam
   useEffect(()=>{
@@ -1654,8 +1723,6 @@ const App = () => {
           setSyncStatus('ok');
         }
       });
-    // Pede nome se Supabase está ativo e nome não foi definido
-    if(!localStorage.getItem('vinci_username')) setShowNamePrompt(true);
   // eslint-disable-next-line
   },[]);
 
@@ -1667,7 +1734,7 @@ const App = () => {
       setSyncStatus(error?'error':'ok');
     } else {
       const {error} = await sb.from('decisions').upsert(
-        {source_path:path,decision,updated_at:new Date().toISOString(),updated_by:userName||'anônimo'},
+        {source_path:path,decision,updated_at:new Date().toISOString(),updated_by:currentUser?.name||'anônimo'},
         {onConflict:'source_path'}
       );
       setSyncStatus(error?'error':'ok');
@@ -1696,18 +1763,15 @@ const App = () => {
       const {error} = await sb.from('decisions').delete().in('source_path',ids);
       setSyncStatus(error?'error':'ok');
     } else {
-      const rows = ids.map(id=>({source_path:id,decision:status,updated_at:new Date().toISOString(),updated_by:userName||'anônimo'}));
+      const rows = ids.map(id=>({source_path:id,decision:status,updated_at:new Date().toISOString(),updated_by:currentUser?.name||'anônimo'}));
       const {error} = await sb.from('decisions').upsert(rows,{onConflict:'source_path'});
       setSyncStatus(error?'error':'ok');
     }
   };
 
-  const confirmName = () => {
-    const name = nameInput.trim();
-    if(!name) return;
-    setUserName(name);
-    localStorage.setItem('vinci_username', name);
-    setShowNamePrompt(false);
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('vinci_session', JSON.stringify(user));
   };
 
   const decisionStats = useMemo(()=>{
@@ -1784,6 +1848,8 @@ const App = () => {
     setActiveView('catalog');
   };
 
+  if(!currentUser) return <LoginScreen onLogin={handleLogin}/>;
+
   return (
     <div className="app">
       {/* HEADER */}
@@ -1805,7 +1871,7 @@ const App = () => {
               {syncStatus==='ok'      && <span style={{color:'#4ade80',fontSize:13}}>✓</span>}
               {syncStatus==='error'   && <span style={{color:'#f87171',fontSize:13}}>✗</span>}
               {syncStatus==='idle'    && <span style={{color:'rgba(255,255,255,0.4)',fontSize:11}}>⟳</span>}
-              <b style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{userName||'—'}</b>
+              <b style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{currentUser?.name||'—'}</b>
             </span>
           )}
           <span className="header-tag"><span className="status-dot"></span>LIVE · <b>{META.data}</b></span>
@@ -1850,20 +1916,6 @@ const App = () => {
         {activeView==='alertas'   && <AlertasView/>}
         {activeView==='issues'    && <IssuesView/>}
       </main>
-
-      {/* MODAL: NOME DO USUÁRIO */}
-      {showNamePrompt&&sb&&(
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <div className="modal-title">Identificação</div>
-            <div className="modal-sub">Para rastrear quem fez cada decisão no dashboard compartilhado, informe seu nome ou iniciais.</div>
-            <input className="modal-input" type="text" placeholder="Ex: Rafael B."
-              value={nameInput} onChange={e=>setNameInput(e.target.value)}
-              onKeyDown={e=>e.key==='Enter'&&confirmName()} autoFocus />
-            <button className="modal-btn" onClick={confirmName}>Confirmar</button>
-          </div>
-        </div>
-      )}
 
       {/* TWEAKS PANEL */}
       {tweaksVisible&&(
