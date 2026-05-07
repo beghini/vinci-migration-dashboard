@@ -1774,6 +1774,11 @@ const App = () => {
     localStorage.setItem('vinci_session', JSON.stringify(user));
   };
 
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('vinci_session');
+  };
+
   const decisionStats = useMemo(()=>{
     // Considera apenas decisões de fontes que existem no catálogo atual
     const validPaths = new Set(CATALOGO_TODOS.map(r=>r.caminho));
@@ -1878,6 +1883,14 @@ const App = () => {
           <span className="header-tag">Branch <b>{META.branch}</b></span>
           <span className="header-tag">Protheus <b>{META.versao_protheus}</b></span>
         </div>
+        <button title="Sair" onClick={handleLogout} style={{display:'flex',alignItems:'center',justifyContent:'center',width:36,height:36,marginLeft:8,background:'none',border:'none',cursor:'pointer',borderRadius:6,opacity:0.55,transition:'opacity 0.15s'}}
+          onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.55'}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M10 11l3-3-3-3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M13 8H6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
       </header>
 
       {/* SIDEBAR */}
