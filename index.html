@@ -1631,43 +1631,29 @@ const AlertasView = () => {
   );
 };
 
-const LoginScreen = () => {
-  const [mode, setMode] = useState(()=>{
-    const h = window.location.hash;
-    return (h.includes('type=invite')||h.includes('type=recovery')) ? 'set-password' : 'login';
-  });
-  const [email, setEmail]             = useState('');
-  const [password, setPassword]       = useState('');
+const logoBar = (
+  <div style={{marginBottom:24,display:'flex',alignItems:'center',gap:12,opacity:0.75}}>
+    <img src="logo_totvs_branco.png" alt="TOTVS" style={{height:26,display:'block'}}/>
+    <span style={{width:1,height:18,background:'rgba(255,255,255,0.4)',display:'inline-block'}}></span>
+    <span style={{fontSize:11,color:'white',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans,sans-serif'}}>Sudeste Meridional</span>
+  </div>
+);
+
+const brandBlock = (
+  <div className="login-brand">
+    <div className="login-logo"><svg viewBox="0 0 16 16"><path d="M2 2h12v2H8v10H6V4H2z"/></svg></div>
+    <div className="login-brand-text">
+      <div className="login-brand-title">Vinci Highways Brasil</div>
+      <div className="login-brand-sub">Dossiê de Migração · TOTVS Cloud</div>
+    </div>
+  </div>
+);
+
+const SetPasswordScreen = ({onDone}) => {
   const [newPass, setNewPass]         = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState('');
-
-  const logoBar = (
-    <div style={{marginBottom:24,display:'flex',alignItems:'center',gap:12,opacity:0.75}}>
-      <img src="logo_totvs_branco.png" alt="TOTVS" style={{height:26,display:'block'}}/>
-      <span style={{width:1,height:18,background:'rgba(255,255,255,0.4)',display:'inline-block'}}></span>
-      <span style={{fontSize:11,color:'white',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans,sans-serif'}}>Sudeste Meridional</span>
-    </div>
-  );
-
-  const brandBlock = (
-    <div className="login-brand">
-      <div className="login-logo"><svg viewBox="0 0 16 16"><path d="M2 2h12v2H8v10H6V4H2z"/></svg></div>
-      <div className="login-brand-text">
-        <div className="login-brand-title">Vinci Highways Brasil</div>
-        <div className="login-brand-sub">Dossiê de Migração · TOTVS Cloud</div>
-      </div>
-    </div>
-  );
-
-  const handleLogin = async () => {
-    if(!email.trim()||!password||!sb) return;
-    setLoading(true); setError('');
-    const {error:err} = await sb.auth.signInWithPassword({email:email.trim().toLowerCase(), password});
-    if(err) setError(err.message==='Invalid login credentials'?'E-mail ou senha incorretos.':err.message);
-    setLoading(false);
-  };
 
   const handleSetPassword = async () => {
     if(newPass.length<6){setError('A senha deve ter pelo menos 6 caracteres.');return;}
@@ -1675,11 +1661,10 @@ const LoginScreen = () => {
     setLoading(true); setError('');
     const {error:err} = await sb.auth.updateUser({password:newPass});
     if(err){setError(err.message);setLoading(false);return;}
-    window.history.replaceState(null,'',window.location.pathname);
-    setLoading(false);
+    onDone();
   };
 
-  if(mode==='set-password') return (
+  return (
     <div className="login-screen">
       {logoBar}
       <div className="login-card">
@@ -1700,6 +1685,21 @@ const LoginScreen = () => {
       </div>
     </div>
   );
+};
+
+const LoginScreen = () => {
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+
+  const handleLogin = async () => {
+    if(!email.trim()||!password||!sb) return;
+    setLoading(true); setError('');
+    const {error:err} = await sb.auth.signInWithPassword({email:email.trim().toLowerCase(), password});
+    if(err) setError(err.message==='Invalid login credentials'?'E-mail ou senha incorretos.':err.message);
+    setLoading(false);
+  };
 
   return (
     <div className="login-screen">
@@ -1733,9 +1733,10 @@ const App = () => {
   const [decisions, setDecisions] = useState(()=>{
     try { return JSON.parse(localStorage.getItem('vinci_decisions')||'{}'); } catch(e) { return {}; }
   });
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [syncStatus, setSyncStatus]   = useState('idle'); // 'idle'|'syncing'|'ok'|'error'
+  const [currentUser, setCurrentUser]       = useState(null);
+  const [authLoading, setAuthLoading]       = useState(true);
+  const [needsPasswordSet, setNeedsPasswordSet] = useState(false);
+  const [syncStatus, setSyncStatus]         = useState('idle'); // 'idle'|'syncing'|'ok'|'error'
 
   // Persiste decisões no localStorage sempre que mudam
   useEffect(()=>{
@@ -1745,8 +1746,12 @@ const App = () => {
   // Supabase Auth — session management
   useEffect(()=>{
     if(!sb){ setAuthLoading(false); return; }
+    // Captura o tipo do link ANTES do Supabase consumir o hash
+    const isInvite = window.location.hash.includes('type=invite') ||
+                     window.location.hash.includes('type=recovery');
     sb.auth.getSession().then(({data:{session}})=>{
       setCurrentUser(session?.user||null);
+      if(session?.user && isInvite) setNeedsPasswordSet(true);
       setAuthLoading(false);
     });
     const {data:{subscription}} = sb.auth.onAuthStateChange((_,session)=>{
@@ -1902,6 +1907,8 @@ const App = () => {
 
   if(authLoading) return <div className="login-screen"><div style={{color:'white',fontFamily:'DM Sans,sans-serif',fontSize:13,opacity:0.6}}>Carregando...</div></div>;
   if(!currentUser) return <LoginScreen/>;
+  if(needsPasswordSet) return <SetPasswordScreen onDone={()=>{setNeedsPasswordSet(false);window.history.replaceState(null,'',window.location.pathname);}}/>;
+
 
   return (
     <div className="app">
