@@ -1631,52 +1631,94 @@ const AlertasView = () => {
   );
 };
 
-const LoginScreen = ({onLogin}) => {
-  const [email, setEmail]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+const LoginScreen = () => {
+  const [mode, setMode] = useState(()=>{
+    const h = window.location.hash;
+    return (h.includes('type=invite')||h.includes('type=recovery')) ? 'set-password' : 'login';
+  });
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [newPass, setNewPass]         = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
 
-  const handleSubmit = async () => {
-    const trimmed = email.trim().toLowerCase();
-    if(!trimmed || !sb) return;
-    setLoading(true);
-    setError('');
-    const {data, error: err} = await sb.from('allowed_users').select('name,email').eq('email', trimmed).maybeSingle();
-    if(err || !data){
-      setError('E-mail não autorizado. Solicite acesso ao administrador.');
-    } else {
-      onLogin({email: data.email, name: data.name});
-    }
+  const logoBar = (
+    <div style={{marginBottom:24,display:'flex',alignItems:'center',gap:12,opacity:0.75}}>
+      <img src="logo_totvs_branco.png" alt="TOTVS" style={{height:26,display:'block'}}/>
+      <span style={{width:1,height:18,background:'rgba(255,255,255,0.4)',display:'inline-block'}}></span>
+      <span style={{fontSize:11,color:'white',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans,sans-serif'}}>Sudeste Meridional</span>
+    </div>
+  );
+
+  const brandBlock = (
+    <div className="login-brand">
+      <div className="login-logo"><svg viewBox="0 0 16 16"><path d="M2 2h12v2H8v10H6V4H2z"/></svg></div>
+      <div className="login-brand-text">
+        <div className="login-brand-title">Vinci Highways Brasil</div>
+        <div className="login-brand-sub">Dossiê de Migração · TOTVS Cloud</div>
+      </div>
+    </div>
+  );
+
+  const handleLogin = async () => {
+    if(!email.trim()||!password||!sb) return;
+    setLoading(true); setError('');
+    const {error:err} = await sb.auth.signInWithPassword({email:email.trim().toLowerCase(), password});
+    if(err) setError(err.message==='Invalid login credentials'?'E-mail ou senha incorretos.':err.message);
     setLoading(false);
   };
 
+  const handleSetPassword = async () => {
+    if(newPass.length<6){setError('A senha deve ter pelo menos 6 caracteres.');return;}
+    if(newPass!==confirmPass){setError('As senhas não coincidem.');return;}
+    setLoading(true); setError('');
+    const {error:err} = await sb.auth.updateUser({password:newPass});
+    if(err){setError(err.message);setLoading(false);return;}
+    window.history.replaceState(null,'',window.location.pathname);
+    setLoading(false);
+  };
+
+  if(mode==='set-password') return (
+    <div className="login-screen">
+      {logoBar}
+      <div className="login-card">
+        {brandBlock}
+        <div className="login-heading">Defina sua senha</div>
+        <div className="login-sub">Primeiro acesso — crie uma senha para continuar.</div>
+        <label className="login-label">Nova senha</label>
+        <input className="login-input" type="password" placeholder="Mínimo 6 caracteres"
+          value={newPass} onChange={e=>{setNewPass(e.target.value);setError('');}} autoFocus/>
+        <label className="login-label">Confirmar senha</label>
+        <input className="login-input" type="password" placeholder="Repita a senha"
+          value={confirmPass} onChange={e=>{setConfirmPass(e.target.value);setError('');}}
+          onKeyDown={e=>e.key==='Enter'&&!loading&&handleSetPassword()}/>
+        <button className="login-btn" onClick={handleSetPassword} disabled={loading||!newPass||!confirmPass}>
+          {loading?'Salvando...':'Definir senha'}
+        </button>
+        {error&&<div className="login-error">{error}</div>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="login-screen">
-      <div style={{marginBottom:24,display:'flex',alignItems:'center',gap:12,opacity:0.75}}>
-        <img src="logo_totvs_branco.png" alt="TOTVS" style={{height:26,display:'block'}}/>
-        <span style={{width:1,height:18,background:'rgba(255,255,255,0.4)',display:'inline-block'}}></span>
-        <span style={{fontSize:11,color:'white',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans,sans-serif'}}>Sudeste Meridional</span>
-      </div>
+      {logoBar}
       <div className="login-card">
-        <div className="login-brand">
-          <div className="login-logo">
-            <svg viewBox="0 0 16 16"><path d="M2 2h12v2H8v10H6V4H2z"/></svg>
-          </div>
-          <div className="login-brand-text">
-            <div className="login-brand-title">Vinci Highways Brasil</div>
-            <div className="login-brand-sub">Dossiê de Migração · TOTVS Cloud</div>
-          </div>
-        </div>
+        {brandBlock}
         <div className="login-heading">Acesso Restrito</div>
-        <div className="login-sub">Digite o e-mail cadastrado para acessar o dashboard de migração.</div>
+        <div className="login-sub">Digite suas credenciais para acessar o dashboard.</div>
         <label className="login-label">E-mail</label>
         <input className="login-input" type="email" placeholder="seu@email.com.br"
-          value={email} onChange={e=>{setEmail(e.target.value);setError('');}}
-          onKeyDown={e=>e.key==='Enter'&&!loading&&handleSubmit()} autoFocus />
-        <button className="login-btn" onClick={handleSubmit} disabled={loading||!email.trim()}>
-          {loading ? 'Verificando...' : 'Entrar'}
+          value={email} onChange={e=>{setEmail(e.target.value);setError('');}} autoFocus/>
+        <label className="login-label">Senha</label>
+        <input className="login-input" type="password" placeholder="Sua senha"
+          value={password} onChange={e=>{setPassword(e.target.value);setError('');}}
+          onKeyDown={e=>e.key==='Enter'&&!loading&&handleLogin()}/>
+        <button className="login-btn" onClick={handleLogin} disabled={loading||!email.trim()||!password}>
+          {loading?'Entrando...':'Entrar'}
         </button>
-        {error && <div className="login-error">{error}</div>}
+        {error&&<div className="login-error">{error}</div>}
       </div>
     </div>
   );
@@ -1691,15 +1733,28 @@ const App = () => {
   const [decisions, setDecisions] = useState(()=>{
     try { return JSON.parse(localStorage.getItem('vinci_decisions')||'{}'); } catch(e) { return {}; }
   });
-  const [currentUser, setCurrentUser] = useState(()=>{
-    try { return JSON.parse(localStorage.getItem('vinci_session')||'null'); } catch(e) { return null; }
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [syncStatus, setSyncStatus]   = useState('idle'); // 'idle'|'syncing'|'ok'|'error'
 
   // Persiste decisões no localStorage sempre que mudam
   useEffect(()=>{
     localStorage.setItem('vinci_decisions', JSON.stringify(decisions));
   },[decisions]);
+
+  // Supabase Auth — session management
+  useEffect(()=>{
+    if(!sb){ setAuthLoading(false); return; }
+    sb.auth.getSession().then(({data:{session}})=>{
+      setCurrentUser(session?.user||null);
+      setAuthLoading(false);
+    });
+    const {data:{subscription}} = sb.auth.onAuthStateChange((_,session)=>{
+      setCurrentUser(session?.user||null);
+    });
+    return ()=>subscription.unsubscribe();
+  // eslint-disable-next-line
+  },[]);
 
   // Carrega decisões do Supabase na montagem e semeia se vazio
   useEffect(()=>{
@@ -1734,7 +1789,7 @@ const App = () => {
       setSyncStatus(error?'error':'ok');
     } else {
       const {error} = await sb.from('decisions').upsert(
-        {source_path:path,decision,updated_at:new Date().toISOString(),updated_by:currentUser?.name||'anônimo'},
+        {source_path:path,decision,updated_at:new Date().toISOString(),updated_by:currentUser?.user_metadata?.full_name||currentUser?.email||'anônimo'},
         {onConflict:'source_path'}
       );
       setSyncStatus(error?'error':'ok');
@@ -1763,21 +1818,13 @@ const App = () => {
       const {error} = await sb.from('decisions').delete().in('source_path',ids);
       setSyncStatus(error?'error':'ok');
     } else {
-      const rows = ids.map(id=>({source_path:id,decision:status,updated_at:new Date().toISOString(),updated_by:currentUser?.name||'anônimo'}));
+      const rows = ids.map(id=>({source_path:id,decision:status,updated_at:new Date().toISOString(),updated_by:currentUser?.user_metadata?.full_name||currentUser?.email||'anônimo'}));
       const {error} = await sb.from('decisions').upsert(rows,{onConflict:'source_path'});
       setSyncStatus(error?'error':'ok');
     }
   };
 
-  const handleLogin = (user) => {
-    setCurrentUser(user);
-    localStorage.setItem('vinci_session', JSON.stringify(user));
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('vinci_session');
-  };
+  const handleLogout = () => { sb.auth.signOut(); };
 
   const decisionStats = useMemo(()=>{
     // Considera apenas decisões de fontes que existem no catálogo atual
@@ -1853,7 +1900,8 @@ const App = () => {
     setActiveView('catalog');
   };
 
-  if(!currentUser) return <LoginScreen onLogin={handleLogin}/>;
+  if(authLoading) return <div className="login-screen"><div style={{color:'white',fontFamily:'DM Sans,sans-serif',fontSize:13,opacity:0.6}}>Carregando...</div></div>;
+  if(!currentUser) return <LoginScreen/>;
 
   return (
     <div className="app">
@@ -1876,7 +1924,7 @@ const App = () => {
               {syncStatus==='ok'      && <span style={{color:'#4ade80',fontSize:13}}>✓</span>}
               {syncStatus==='error'   && <span style={{color:'#f87171',fontSize:13}}>✗</span>}
               {syncStatus==='idle'    && <span style={{color:'rgba(255,255,255,0.4)',fontSize:11}}>⟳</span>}
-              <b style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{currentUser?.name||'—'}</b>
+              <b style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{currentUser?.user_metadata?.full_name||currentUser?.email?.split('@')[0]||'—'}</b>
             </span>
           )}
           <span className="header-tag"><span className="status-dot"></span>LIVE · <b>{META.data}</b></span>
