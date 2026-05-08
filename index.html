@@ -33,8 +33,40 @@
   --sidebar-w: 220px;
   --header-h: 56px;
 }
+[data-theme="dark"] {
+  --bg: #0f0f0e;
+  --surface: #1a1917;
+  --surface-2: #242320;
+  --border: #2e2c28;
+  --border-2: #3e3c37;
+  --ink: #f0ede6;
+  --ink-2: #c8c5bc;
+  --ink-3: #7a7870;
+  --ink-4: #4e4d49;
+  --blue: #2563a8;
+  --blue-light: #0f1f36;
+  --blue-mid: #4a86c8;
+  --orange: #e06030;
+  --orange-light: #2a1408;
+  --amber: #c8941a;
+  --amber-light: #241a06;
+  --teal: #1a9b7a;
+  --teal-light: #081e18;
+}
+[data-theme="dark"] .header { background: #111210; }
+[data-theme="dark"] .login-screen { background: #111210; }
+[data-theme="dark"] thead { background: var(--surface-2); }
+[data-theme="dark"] tr.data-row:hover td,
+[data-theme="dark"] tr.data-row.expanded td { background: var(--blue-light); }
+[data-theme="dark"] .hit-code { background: var(--surface-2); }
+[data-theme="dark"] .modal-box { box-shadow: 0 16px 48px rgba(0,0,0,0.6); }
+
+/* DARK MODE TOGGLE */
+.theme-btn{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;color:rgba(255,255,255,0.65);transition:all 0.15s;flex-shrink:0;}
+.theme-btn:hover{background:rgba(255,255,255,0.12);color:white;border-color:rgba(255,255,255,0.2);}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+[data-theme="dark"] body{font-weight:350;}
 .mono{font-family:'DM Mono',monospace;}
 
 /* LAYOUT */
@@ -83,9 +115,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 
 /* SIDEBAR */
 .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
-.nav-section-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);padding:16px 16px 6px;margin-top:4px;}
+.nav-section-label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-4);padding:16px 16px 6px;margin-top:4px;}
 .nav-section-label:first-child{margin-top:0;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;border-radius:0;transition:all 0.15s;color:var(--ink-2);font-size:13px;font-weight:400;border-left:2px solid transparent;user-select:none;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;border-radius:0;transition:all 0.15s;color:var(--ink-2);font-size:14px;font-weight:400;border-left:2px solid transparent;user-select:none;}
 .nav-item:hover{background:var(--surface-2);color:var(--ink);}
 .nav-item.active{background:var(--blue-light);color:var(--blue);font-weight:500;border-left-color:var(--blue);}
 .nav-item .nav-icon{width:16px;height:16px;opacity:0.6;flex-shrink:0;}
@@ -105,13 +137,13 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 .page-header{margin-bottom:24px;}
 .page-header h1{font-size:22px;font-weight:600;color:var(--ink);letter-spacing:-0.01em;}
 .page-header p{font-size:13px;color:var(--ink-3);margin-top:4px;}
-.breadcrumb{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-4);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
+.breadcrumb{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-4);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
 
 /* KPI CARDS */
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
 .kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 20px;position:relative;transition:box-shadow 0.2s;}
 .kpi:hover{box-shadow:0 2px 12px rgba(0,0,0,0.06);}
-.kpi-label{font-size:11px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+.kpi-label{font-size:12px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
 .kpi-value{font-family:'DM Mono',monospace;font-size:28px;font-weight:400;color:var(--ink);line-height:1;letter-spacing:-0.02em;}
 .kpi-value.danger{color:var(--orange);}
 .kpi-value.amber{color:var(--amber);}
@@ -155,7 +187,7 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 .cat-filter-pill .x{cursor:pointer;font-size:14px;line-height:1;opacity:0.7;}
 .cat-filter-pill .x:hover{opacity:1;}
 .hc-row:hover{background:var(--surface-2);}
-.hc-name{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--ink);letter-spacing:0.04em;}
+.hc-name{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--ink);letter-spacing:0.04em;}
 .hc-bars{display:flex;height:20px;gap:2px;align-items:center;}
 .hc-seg{display:block;border-radius:1px;}
 .hc-total{font-family:'DM Mono',monospace;font-size:20px;font-weight:400;color:var(--ink);text-align:right;min-width:32px;}
@@ -182,26 +214,26 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 .tbl-wrap{border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:620px;}
 table{width:100%;border-collapse:collapse;}
 thead{position:sticky;top:0;z-index:5;background:var(--surface-2);}
-th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;}
 th:hover{color:var(--blue);}
 th.sorted{color:var(--blue);}
-td{padding:10px 14px;font-size:12px;color:var(--ink-2);border-bottom:1px solid var(--surface-2);vertical-align:middle;}
+td{padding:10px 14px;font-size:13px;color:var(--ink-2);border-bottom:1px solid var(--surface-2);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr.data-row{cursor:pointer;transition:background 0.1s;}
 tr.data-row:hover td{background:var(--blue-light);}
 tr.data-row.expanded td{background:var(--blue-light);}
 tr.detail-row td{background:var(--surface-2);padding:16px 20px;}
-.file-name{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--ink);}
-.file-func{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-4);margin-top:2px;}
-.file-path{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-4);margin-top:1px;}
-.loc-val{font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
+.file-name{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--ink);}
+.file-func{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-4);margin-top:2px;}
+.file-path{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-4);margin-top:1px;}
+.loc-val{font-family:'DM Mono',monospace;font-size:13px;text-align:right;}
 .badges{display:flex;gap:4px;flex-wrap:wrap;}
 .chevron{transition:transform 0.2s;display:inline-flex;color:var(--ink-4);}
 .expanded .chevron{transform:rotate(90deg);}
 
 /* HITS DETAIL */
 .hits-header{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-4);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;}
-.hit-item{display:grid;grid-template-columns:60px 140px 80px 1fr;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:11px;}
+.hit-item{display:grid;grid-template-columns:60px 140px 80px 1fr;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:12px;}
 .hit-item:last-child{border-bottom:none;}
 .hit-line{color:var(--ink-4);}
 .hit-cat{color:var(--ink-2);font-weight:500;}
@@ -1744,11 +1776,18 @@ const App = () => {
   const [authLoading, setAuthLoading]       = useState(true);
   const [needsPasswordSet, setNeedsPasswordSet] = useState(false);
   const [syncStatus, setSyncStatus]         = useState('idle'); // 'idle'|'syncing'|'ok'|'error'
+  const [darkMode, setDarkMode]             = useState(()=>localStorage.getItem('vinci_theme')==='dark');
 
   // Persiste decisões no localStorage sempre que mudam
   useEffect(()=>{
     localStorage.setItem('vinci_decisions', JSON.stringify(decisions));
   },[decisions]);
+
+  // Aplica dark mode no <html> e persiste preferência
+  useEffect(()=>{
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    localStorage.setItem('vinci_theme', darkMode ? 'dark' : 'light');
+  },[darkMode]);
 
   // Supabase Auth — session management
   useEffect(()=>{
@@ -1958,7 +1997,13 @@ const App = () => {
           <span className="header-tag">Branch <b>{META.branch}</b></span>
           <span className="header-tag">Protheus <b>{META.versao_protheus}</b></span>
         </div>
-        <button title="Sair" onClick={handleLogout} style={{display:'flex',alignItems:'center',justifyContent:'center',width:36,height:36,marginLeft:8,background:'none',border:'none',cursor:'pointer',borderRadius:6,opacity:0.55,transition:'opacity 0.15s'}}
+        <button className="theme-btn" title={darkMode?'Modo claro':'Modo escuro'} onClick={()=>setDarkMode(d=>!d)} style={{marginLeft:8}}>
+          {darkMode
+            ? <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.4"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+            : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6 6 0 1 0 8 8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+          }
+        </button>
+        <button title="Sair" onClick={handleLogout} style={{display:'flex',alignItems:'center',justifyContent:'center',width:36,height:36,marginLeft:4,background:'none',border:'none',cursor:'pointer',borderRadius:6,opacity:0.55,transition:'opacity 0.15s'}}
           onMouseEnter={e=>e.currentTarget.style.opacity='1'} onMouseLeave={e=>e.currentTarget.style.opacity='0.55'}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
