@@ -386,27 +386,8 @@ const STATS = {
   total_categorias: 9
 };
 
-const MODULOS = [
-  { nome:"SIGACOM",       label:"Compras",                fontes:104, loc:23221, hc_alta:61,  hc_media:19, hc_baixa:0 },
-  { nome:"INTEGRACOES",   label:"Integrações",            fontes:100, loc:21929, hc_alta:3,   hc_media:1,  hc_baixa:0 },
-  { nome:"SIGAFIN",       label:"Financeiro",             fontes:59,  loc:5378,  hc_alta:10,  hc_media:4,  hc_baixa:2 },
-  { nome:"SIGATEC",       label:"Tecnologia da Informação",fontes:55, loc:15285, hc_alta:1,   hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAGPE",       label:"Gestão de Pessoal",      fontes:28,  loc:14005, hc_alta:9,   hc_media:10, hc_baixa:0 },
-  { nome:"WS",            label:"Webservice",             fontes:21,  loc:10191, hc_alta:113, hc_media:3,  hc_baixa:0 },
-  { nome:"IMPORT-TOTVS",  label:"Importações TOTVS",      fontes:20,  loc:4666,  hc_alta:4,   hc_media:1,  hc_baixa:0 },
-  { nome:"SIGACTB",       label:"Contabilidade Gerencial",fontes:16,  loc:4814,  hc_alta:11,  hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAEST",       label:"Estoque e Custos",       fontes:10,  loc:779,   hc_alta:4,   hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAATF",       label:"Ativo Fixo",             fontes:6,   loc:1847,  hc_alta:6,   hc_media:0,  hc_baixa:0 },
-  { nome:"RELATORIOS",    label:"Relatórios",             fontes:6,   loc:1834,  hc_alta:0,   hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAPCP",       label:"PCP",                    fontes:5,   loc:558,   hc_alta:0,   hc_media:0,  hc_baixa:0 },
-  { nome:"IMPORT",        label:"Importações",            fontes:4,   loc:652,   hc_alta:1,   hc_media:0,  hc_baixa:0 },
-  { nome:"RDMAKE",        label:"RdMakes",                fontes:3,   loc:1616,  hc_alta:2,   hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAFAT",       label:"Faturamento",            fontes:2,   loc:56,    hc_alta:0,   hc_media:0,  hc_baixa:0 },
-  { nome:"GATILHOS",      label:"Gatilhos",               fontes:2,   loc:97,    hc_alta:0,   hc_media:0,  hc_baixa:0 },
-  { nome:"INTEG-GUPY",    label:"Gupy",                   fontes:1,   loc:63,    hc_alta:1,   hc_media:1,  hc_baixa:0 },
-  { nome:"NOVOS",         label:"Novos Módulos",          fontes:1,   loc:8,     hc_alta:0,   hc_media:0,  hc_baixa:0 },
-  { nome:"SIGAPONTO",     label:"Ponto Eletrônico",       fontes:1,   loc:2463,  hc_alta:0,   hc_media:2,  hc_baixa:0 },
-];
+// MODULOS is computed dynamically from CATALOGO_TODOS after it's built (see below).
+let MODULOS = [];
 
 // Fallback usado apenas quando CATALOGO_TODOS está vazio (ex: catalogo-full.js não carregou).
 // Quando o catálogo está carregado, CATEGORIAS é recalculado em tempo real (ver getCategorias()).
@@ -503,8 +484,25 @@ const SEV_BG    = { alta:'var(--orange-light)', media:'var(--amber-light)', baix
 const CATALOGO_TODOS = (window.CATALOGO_FULL || []).map(r => ({
   caminho: r.c, arquivo: r.a, subpasta: r.s, modulo: r.m, tipo: r.t,
   prefixo: r.p, principal: r.fn, loc: r.l, autor: r.au,
-  hc_alta: r.ha, hc_media: r.hm, hc_baixa: r.hb, hits: r.h
+  hc_alta: r.ha, hc_media: r.hm, hc_baixa: r.hb, hits: r.h,
+  pasta: (r.c || '').split('/')[0]
 }));
+
+// MODULOS derivado das pastas reais do repositório
+if (CATALOGO_TODOS.length) {
+  const map = {};
+  CATALOGO_TODOS.forEach(r => {
+    const p = r.pasta;
+    if (!p) return;
+    if (!map[p]) map[p] = { nome: p, fontes: 0, loc: 0, hc_alta: 0, hc_media: 0, hc_baixa: 0 };
+    map[p].fontes++;
+    map[p].loc += r.loc || 0;
+    map[p].hc_alta += r.hc_alta || 0;
+    map[p].hc_media += r.hc_media || 0;
+    map[p].hc_baixa += r.hc_baixa || 0;
+  });
+  MODULOS = Object.values(map).sort((a, b) => b.fontes - a.fontes);
+}
 
 // Calcula categorias dinamicamente a partir dos hits reais de CATALOGO_TODOS,
 // garantindo zero divergência com o que o Catálogo exibe ao filtrar.
@@ -550,7 +548,7 @@ if (CATALOGO_TODOS.length) {
   STATS.total_categorias = CATEGORIAS.length;
   STATS.total_arquivos = CATALOGO_TODOS.length;
   STATS.total_loc = CATALOGO_TODOS.reduce((s,r)=>s+(r.loc||0),0);
-  STATS.total_modulos = new Set(CATALOGO_TODOS.map(r=>r.modulo)).size;
+  STATS.total_modulos = MODULOS.length;
 }
 
 /* ─── ICONS ──────────────────────────────────────────────────────────── */
@@ -725,7 +723,7 @@ const ModulesView = ({ onFilterModule }) => {
             return (
               <div className="mod-card" key={m.nome} onClick={()=>onFilterModule(m.nome)}>
                 <div className="mod-name">{m.nome}</div>
-                <div className="mod-sub">{m.label} · {fmt(m.loc)} LOC</div>
+                <div className="mod-sub">{fmt(m.loc)} LOC</div>
                 <div className="mod-bar">
                   {pA>0&&<div className="mod-bar-seg" style={{width:`${pA}%`,background:'var(--orange)'}}/>}
                   {pM>0&&<div className="mod-bar-seg" style={{width:`${pM}%`,background:'var(--amber)'}}/>}
@@ -827,15 +825,15 @@ const CatalogView = ({ initialModule, initialCategoria, onClearCategoria }) => {
   useEffect(()=>{ setFMod(initialModule||''); },[initialModule]);
   useEffect(()=>{ setFCat(initialCategoria||''); },[initialCategoria]);
 
-  const mods  = useMemo(()=>[...new Set(CATALOGO_TODOS.map(r=>r.modulo))].sort(),[]);
-  const tipos = useMemo(()=>[...new Set(CATALOGO_TODOS.map(r=>r.tipo))].sort(),[]);
+  const mods  = useMemo(()=>[...new Set(CATALOGO_TODOS.map(r=>r.pasta))].sort(),[]);
+  const tipos = useMemo(()=>[...new Set(CATALOGO_TODOS.map(r=>r.subpasta||''))].filter(Boolean).sort(),[]);
 
   const filtered = useMemo(()=>{
     const q = search.toLowerCase();
     return CATALOGO_TODOS.filter(r=>{
       if(q && !(r.arquivo.toLowerCase().includes(q)||(r.principal||'').toLowerCase().includes(q)||(r.autor||'').toLowerCase().includes(q))) return false;
-      if(fMod && r.modulo!==fMod) return false;
-      if(fTipo && r.tipo!==fTipo) return false;
+      if(fMod && r.pasta!==fMod) return false;
+      if(fTipo && r.subpasta!==fTipo) return false;
       if(fSev==='alta' && r.hc_alta===0) return false;
       if(fSev==='media' && r.hc_media===0) return false;
       if(fSev==='hc' && (r.hc_alta+r.hc_media+r.hc_baixa)===0) return false;
@@ -901,7 +899,7 @@ const CatalogView = ({ initialModule, initialCategoria, onClearCategoria }) => {
         </div>
         <div className="select-wrap">
           <select value={fTipo} onChange={e=>setFTipo(e.target.value)}>
-            <option value="">Todos os tipos</option>
+            <option value="">Todas as subpastas</option>
             {tipos.map(t=><option key={t}>{t}</option>)}
           </select>
         </div>
@@ -919,8 +917,8 @@ const CatalogView = ({ initialModule, initialCategoria, onClearCategoria }) => {
           <thead>
             <tr>
               <th onClick={()=>setSort('arquivo')} className={sortKey==='arquivo'?'sorted':''}>Arquivo {sortKey==='arquivo'?sortDir===-1?'↓':'↑':'↕'}</th>
-              <th onClick={()=>setSort('modulo')} className={sortKey==='modulo'?'sorted':''}>Módulo {sortKey==='modulo'?sortDir===-1?'↓':'↑':'↕'}</th>
-              <th onClick={()=>setSort('tipo')} className={sortKey==='tipo'?'sorted':''}>Tipo {sortKey==='tipo'?sortDir===-1?'↓':'↑':'↕'}</th>
+              <th onClick={()=>setSort('pasta')} className={sortKey==='pasta'?'sorted':''}>Pasta {sortKey==='pasta'?sortDir===-1?'↓':'↑':'↕'}</th>
+              <th onClick={()=>setSort('subpasta')} className={sortKey==='subpasta'?'sorted':''}>Subpasta {sortKey==='subpasta'?sortDir===-1?'↓':'↑':'↕'}</th>
               <th>Prefixo</th>
               <th onClick={()=>setSort('loc')} className={sortKey==='loc'?'sorted':''} style={{textAlign:'right'}}>LOC {sortKey==='loc'?sortDir===-1?'↓':'↑':'↕'}</th>
               <th onClick={()=>setSort('hc_alta')} className={sortKey==='hc_alta'?'sorted':''} style={{textAlign:'center'}}>Hardcodes {sortKey==='hc_alta'?sortDir===-1?'↓':'↑':'↕'}</th>
@@ -939,10 +937,9 @@ const CatalogView = ({ initialModule, initialCategoria, onClearCategoria }) => {
                     <td>
                       <div className="file-name">{r.arquivo}</div>
                       {r.principal&&<div className="file-func">{r.principal}</div>}
-                      {r.subpasta&&<div className="file-path">{r.subpasta}/</div>}
                     </td>
-                    <td><span className="tag">{r.modulo}</span></td>
-                    <td style={{fontSize:11,color:'var(--ink-3)'}}>{r.tipo}</td>
+                    <td><span className="tag">{r.pasta}</span></td>
+                    <td style={{fontSize:11,color:'var(--ink-3)'}}>{r.subpasta||'—'}</td>
                     <td>{r.prefixo?<span className="tag">{r.prefixo}</span>:<span style={{color:'var(--ink-4)'}}>—</span>}</td>
                     <td className="loc-val">{fmt(r.loc)}</td>
                     <td>
@@ -1984,11 +1981,11 @@ const App = () => {
         <div className="nav-section-label" style={{marginTop:'auto',paddingTop:24}}>Info</div>
         <div className="nav-item" style={{fontSize:11,color:'var(--ink-4)',cursor:'default'}}>
           <span className="nav-icon"><Icon name="alert" size={14}/></span>
-          444 fontes analisados
+          {fmt(STATS.total_arquivos)} fontes analisados
         </div>
         <div className="nav-item" style={{fontSize:11,color:'var(--ink-4)',cursor:'default'}}>
           <span className="nav-icon"><Icon name="alert" size={14}/></span>
-          109.462 linhas de código
+          {fmt(STATS.total_loc)} linhas de código
         </div>
         <div className="nav-item" style={{fontSize:11,color:'var(--ink-4)',cursor:'default'}}>
           <span className="nav-icon"><Icon name="alert" size={14}/></span>
