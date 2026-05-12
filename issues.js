@@ -1,7 +1,7 @@
-// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-08 19:45
-// Fonte: Notion — Banco Chamados (Vinci) | 6 issues
+// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-12 12:45
+// Fonte: Notion — Banco Chamados (Vinci) | 8 issues
 // NÃO editar manualmente — re-execute o script para atualizar.
-// Carregado por: claude_design/Vinci Migration Dashboard.html via <script src="issues.js">
+// Carregado por: deploy/index.html via <script src="issues.js">
 window.ISSUES_DATA = [
   {
     "id": "ISSUE-012",
@@ -10,7 +10,7 @@ window.ISSUES_DATA = [
     "tipo": "Sustentação",
     "status": "Concluído",
     "status_notion": "Concluído",
-    "prioridade": "Alta",
+    "prioridade": "Urgente",
     "descricao": "O ambiente de origem era compartilhado entre múltiplas empresas (01 a 09+). No novo TOTVS Cloud, a Vinci opera exclusivamente com a empresa 01 (4 filiais). 28 fontes contêm queries que referenciam via UNION ALL, JOIN direto ou StartJob+RPCSetEnv tabelas/contextos de empresas 02 a 08 (ex: SE2020, SD1030, SRA040), que não foram criadas no novo servidor. Todos os 28 fontes falharão com erro de objeto inexistente ou contexto inválido no TOTVS Cloud ao serem executados em produção.",
     "observacoes": "28 fontes tratados. Último: MATA010_PE.prw (commits cd348c7 + 3a8f506, 08/05/2026) — replicação de produtos entre empresas removida, PE interrompido com Return .F. Aguarda compilação e teste no TDS homologação.",
     "complexidade": "Alta"
@@ -22,7 +22,7 @@ window.ISSUES_DATA = [
     "tipo": "Sustentação",
     "status": "Concluído",
     "status_notion": "Concluído",
-    "prioridade": "Média",
+    "prioridade": "Normal",
     "descricao": "Os fontes ADVPL/TLPP estão em CP1252 (Windows-1252) mas o repositório não possui .gitattributes configurado nem settings do VS Code, causando exibição incorreta de caracteres especiais no diff/Git Graph. Não há corrupção real nos bytes. Solução: adicionar .gitattributes com eol=crlf + linguist-language=Harbour e .vscode/settings.json com files.encoding=windows1252.",
     "observacoes": "Concluído. .gitattributes e .vscode/settings.json já existiam (commits 4a68cfa e 2163377). git add --renormalize normalizou EOL de MT120OK.prw (LF→CRLF), commit 88abd6c. Nota: git diff/Git Graph ainda exibe ● para CP1252 — limitação do Git sem driver textconv; não estava no escopo do issue.",
     "complexidade": "Baixa"
@@ -68,11 +68,35 @@ window.ISSUES_DATA = [
     "titulo": "Identificar relatórios que utilizam acesso via VIEW",
     "modulo": "SIGACOM, SIGAFIN",
     "tipo": "Sustentação",
-    "status": "Aberto",
-    "status_notion": "Recebido",
+    "status": "Em desenvolvimento",
+    "status_notion": "Em Desenvolvimento",
     "prioridade": "Alta",
     "descricao": "Fontes do repositório acessam diretamente VIEWs SQL (ex: V_XRELPC, V_XRELSC, V_XRELFI) que não estão ativas no ambiente migrado TOTVS Cloud. Necessário identificar todos os fontes afetados antes de planejar a correção.",
-    "observacoes": "Levantamento concluído (Etapa A). 6 fontes identificados utilizando 3 VIEWs distintas: V_XRELPC, V_XRELSC, V_XRELFI. Aguardando triagem e decisão sobre estratégia de correção.",
+    "observacoes": "Correção aplicada em 08/05/2026: FwAlertWarning + Return inseridos nos 6 fontes afetados (IBCOMR04, IBCOMR05, IBCOMR10, XRELPC, XRELSC, XRELFI). Commit 1814168 na branch develop. Aguardando validação no ambiente TOTVS Cloud.",
+    "complexidade": "Média"
+  },
+  {
+    "id": "ISSUE-020",
+    "titulo": "Desativar rotinas de replicação multi-empresa (WIZCADSA2, MATA020_PE, MATA010_PE)",
+    "modulo": "SIGATEC / SIGACOM",
+    "tipo": "Sustentação",
+    "status": "Concluído",
+    "status_notion": "Concluído",
+    "prioridade": "Normal",
+    "descricao": "No ambiente de origem, a Vinci operava em servidor compartilhado com múltiplas empresas (grupos 01–09+). Três rotinas foram desenvolvidas para replicar cadastros entre grupos: WIZCADSA2 (wizard SA2), MATA020_PE (PE fornecedores) e MATA010_PE (PE produtos). No novo ambiente TOTVS Cloud dedicado (empresa 01 única), essas rotinas não se aplicam e foram desativadas via comentário de código.",
+    "observacoes": "Concluído. Rotinas comentadas (não excluídas) — pendente confirmação do cliente para exclusão definitiva do repositório. Commits: 175506d, cd348c7, 3a8f506.",
+    "complexidade": "Baixa"
+  },
+  {
+    "id": "ISSUE-021",
+    "titulo": "Ajustes endpoint para integração Solicitação e Pedido de Compras com o Fluig",
+    "modulo": "SIGACOM",
+    "tipo": "Sustentação",
+    "status": "Concluído",
+    "status_notion": "Concluído",
+    "prioridade": "Alta",
+    "descricao": "Com a migração para o novo ambiente TOTVS Cloud dedicado, os endpoints de integração com o Fluig precisam ser validados e ajustados. As rotinas M110STTS (PE pós-gravação da SC) e MT120FIM (PE pós-finalização do PC) realizam chamadas SOAP ao ECMWorkflowEngineService do Fluig para iniciar e cancelar processos de aprovação.",
+    "observacoes": "Concluído. bNoCheckPeerCert := .T. inserido nos 5 pontos de instanciação de TWsdlManager em M110STTS.prw e MT120FIM.PRW. Validado no ambiente PROTO.",
     "complexidade": "Média"
   }
 ];
