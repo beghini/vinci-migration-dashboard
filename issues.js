@@ -1,5 +1,5 @@
-// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-12 12:45
-// Fonte: Notion — Banco Chamados (Vinci) | 8 issues
+// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-14 15:30
+// Fonte: Notion — Banco Chamados (Vinci) | 9 issues
 // NÃO editar manualmente — re-execute o script para atualizar.
 // Carregado por: deploy/index.html via <script src="issues.js">
 window.ISSUES_DATA = [
@@ -32,8 +32,8 @@ window.ISSUES_DATA = [
     "titulo": "Levantamento de Parâmetros SX6 (GETMV) — URLs, IPs e Endpoints a Revisar para Migração Cloud",
     "modulo": "Transversal (todos os módulos)",
     "tipo": "Sustentação",
-    "status": "Em análise",
-    "status_notion": "Em Revisão",
+    "status": "Concluído",
+    "status_notion": "Concluído",
     "prioridade": "Alta",
     "descricao": "Identificar em todos os 443 fontes do repositório tsm-vinci quais utilizam GETMV() para acessar parâmetros SX6 que referenciam URLs, IPs fixos ou endpoints de integração. O ambiente de origem possui parâmetros configurados para o servidor antigo compartilhado; no novo TOTVS Cloud todos esses valores precisarão ser revisados e recadastrados. Objetivo: gerar inventário completo de parâmetros sensíveis à migração.",
     "observacoes": "Valores exportados do servidor origem (06/05/2026). 45 parâmetros coletados. Problemas críticos: 4 IPs fixos inválidos no Cloud (172.22.69.104, 10.14.25.78, 10.14.25.71, 172.21.64.52), 7 caminhos de arquivo locais do servidor antigo, MV_ECMPSW vazio (senha Fluig). Próximo: time de implantação TOTVS deve recadastrar parâmetros com valores do novo ambiente antes do go-live.",
@@ -56,7 +56,7 @@ window.ISSUES_DATA = [
     "titulo": "Campos no fonte sem correspondência no SX3/banco — rastreamento contínuo até go-live",
     "modulo": "SIGACOM",
     "tipo": "Sustentação",
-    "status": "Aguardando cliente",
+    "status": "Em análise",
     "status_notion": "Entrega / Testes",
     "prioridade": "Alta",
     "descricao": "Durante a migração para o TOTVS Cloud, foram identificados campos customizados referenciados nos fontes ADVPL que não possuem correspondência no dicionário de dados (SX3) do novo ambiente. Esta issue é um rastreador contínuo — permanece aberta até o go-live. A cada novo campo identificado, registra-se o campo, a tabela, os fontes que o utilizam e a ação tomada.",
@@ -85,6 +85,18 @@ window.ISSUES_DATA = [
     "prioridade": "Normal",
     "descricao": "No ambiente de origem, a Vinci operava em servidor compartilhado com múltiplas empresas (grupos 01–09+). Três rotinas foram desenvolvidas para replicar cadastros entre grupos: WIZCADSA2 (wizard SA2), MATA020_PE (PE fornecedores) e MATA010_PE (PE produtos). No novo ambiente TOTVS Cloud dedicado (empresa 01 única), essas rotinas não se aplicam e foram desativadas via comentário de código.",
     "observacoes": "Concluído. Rotinas comentadas (não excluídas) — pendente confirmação do cliente para exclusão definitiva do repositório. Commits: 175506d, cd348c7, 3a8f506.",
+    "complexidade": "Baixa"
+  },
+  {
+    "id": "ISSUE-022",
+    "titulo": "Exclusão automática do item contábil (CTD) ao excluir o fornecedor/cliente",
+    "modulo": "SIGACOM / SIGAFIN",
+    "tipo": "Inovação",
+    "status": "Concluído",
+    "status_notion": "Concluído",
+    "prioridade": "Normal",
+    "descricao": "Ao excluir um fornecedor ou cliente, o registro CTD associado (chave F+cod+loja ou C+cod+loja) não era removido. Ao recriar o mesmo código+loja, MA020TOK/MA030TOK geravam chave duplicada no CTD.",
+    "observacoes": "Concluído. Commit 2a3dca2 em develop (14/05/2026). MATA020_PE.prw e CRMA980_MVC.prw alterados com exclusão automática do CTD ao excluir fornecedor/cliente.",
     "complexidade": "Baixa"
   },
   {
