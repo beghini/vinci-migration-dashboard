@@ -30,7 +30,25 @@ create policy "atualização pública" on public.decisions for update using (tru
 create policy "exclusão pública"  on public.decisions for delete using (true);
 ```
 
-### 1.2 Copiar credenciais
+### 1.2 Criar a tabela de parâmetros MV (SX6)
+
+```sql
+create table if not exists public.mv_parameters (
+  mv_var      text primary key,
+  status      text not null default 'Avaliar',
+  valor_novo  text,
+  updated_at  timestamptz default now(),
+  updated_by  text
+);
+
+alter table public.mv_parameters enable row level security;
+
+create policy "leitura pública"     on public.mv_parameters for select using (true);
+create policy "escrita pública"     on public.mv_parameters for insert with check (true);
+create policy "atualização pública" on public.mv_parameters for update using (true);
+```
+
+### 1.3 Copiar credenciais
 
 No menu lateral: **Project Settings → API**
 

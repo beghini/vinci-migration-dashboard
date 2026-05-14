@@ -381,6 +381,7 @@ tr.detail-row td{background:var(--surface-2);padding:16px 20px;}
 <script src="catalogo-full.js"></script>
 <script src="issues.js"></script>
 <script src="decisoes-preset.js"></script>
+<script src="parametros-preset.js"></script>
 <script src="alertas-full.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -597,6 +598,7 @@ const Icon = ({ name, size=16 }) => {
     sort:     <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M4 5l4-3 4 3M4 11l4 3 4-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     decision: <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/><path d="M5 8.2l2 2 4-4.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     issues:   <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+    config:   <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>,
     check:    <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M3 8.2l3.2 3.2L13 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     cross:    <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
     download: <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 7l4 4 4-4M2 14h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>,
@@ -1762,6 +1764,202 @@ const LoginScreen = () => {
   );
 };
 
+/* ─── PARAMETROS VIEW ───────────────────────────────────────────────── */
+const MV_STATUS_OPTS    = ['Avaliar','Confirmado','Ajustado','Excluir'];
+const MV_STATUS_OK      = new Set(['Confirmado','Ajustado']);
+const MV_VALID_STATUSES = new Set(MV_STATUS_OPTS);
+
+// mapeia status_inicial legado (do preset) para o novo vocabulário
+const mapStatusInicial = s => {
+  if(MV_VALID_STATUSES.has(s)) return s;
+  if(s==='OK') return 'Confirmado';
+  return 'Avaliar';
+};
+
+const fmtMeta = (updated_by, updated_at) => {
+  if(!updated_by && !updated_at) return null;
+  let d = '';
+  if(updated_at){ try{ d = new Date(updated_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){} }
+  return `${updated_by||'—'} · ${d||'—'}`;
+};
+
+const ParametrosView = ({ mvParams, mvParamsStats, setMvParam }) => {
+  const all = window.PARAMETROS_DATA || [];
+
+  const grupos = useMemo(()=>{
+    const map = {};
+    all.forEach(p=>{ if(!map[p.grupo]) map[p.grupo]=[]; map[p.grupo].push(p); });
+    return map;
+  // eslint-disable-next-line
+  },[]);
+
+  const [filter, setFilter] = useState('todos');
+  const [search,  setSearch]  = useState('');
+
+  // drafts: {mv_var: {status, valor_novo}} — edições locais ainda não salvas
+  const [drafts, setDrafts] = useState({});
+
+  const getSaved = (mv_var) => {
+    const s = mvParams[mv_var]||{};
+    return {
+      status:    MV_VALID_STATUSES.has(s.status) ? s.status : mapStatusInicial((window.PARAMETROS_DATA||[]).find(p=>p.mv_var===mv_var)?.status_inicial||''),
+      valor_novo: s.valor_novo||''
+    };
+  };
+
+  const getDraft = (mv_var) => {
+    if(drafts[mv_var]) return drafts[mv_var];
+    return getSaved(mv_var);
+  };
+
+  const isDirty = (mv_var) => {
+    if(!drafts[mv_var]) return false;
+    const saved = getSaved(mv_var);
+    const d = drafts[mv_var];
+    return d.status !== saved.status || d.valor_novo !== saved.valor_novo;
+  };
+
+  const handleDraft = (mv_var, field, value) => {
+    setDrafts(prev=>{
+      const cur = prev[mv_var] || getSaved(mv_var);
+      return {...prev, [mv_var]: {...cur, [field]: value}};
+    });
+  };
+
+  const handleSave = (mv_var) => {
+    const d = drafts[mv_var];
+    if(!d) return;
+    setMvParam(mv_var, {status: d.status, valor_novo: d.valor_novo});
+    setDrafts(prev=>{ const n={...prev}; delete n[mv_var]; return n; });
+  };
+
+  const matchesFilter = (p) => {
+    const status = getDraft(p.mv_var).status;
+    if(filter==='avaliar'     && status!=='Avaliar') return false;
+    if(filter==='bloqueantes' && !p.bloqueante)      return false;
+    if(search && !p.mv_var.toLowerCase().includes(search.toLowerCase()) &&
+       !p.descricao.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  };
+
+  const statusStyle = (status) => {
+    if(MV_STATUS_OK.has(status))   return {bg:'#dcfce7',color:'#166534'};
+    if(status==='Excluir')          return {bg:'#f1f5f9',color:'#64748b'};
+    return {bg:'#fef3c7',color:'#92400e'}; // Avaliar
+  };
+
+  return (
+    <div className="view active">
+      <div className="breadcrumb">Vinci · Parâmetros do Sistema</div>
+      <div className="page-header">
+        <h1>Parâmetros MV — SX6</h1>
+        <p>{mvParamsStats.total} parâmetros ativos · <span style={{color:'#16a34a'}}>{mvParamsStats.atualizados} confirmados</span> · <span style={{color:'#92400e'}}>{mvParamsStats.avaliar} a avaliar</span> · <span style={{color:'#dc2626'}}>{mvParamsStats.bloqueantes} bloqueantes pendentes</span>{mvParamsStats.excluir?` · ${mvParamsStats.excluir} a excluir`:''}</p>
+      </div>
+
+      {/* KPIs */}
+      <div className="kpi-grid" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:24}}>
+        <div className="kpi"><div className="kpi-label">Total</div><div className="kpi-value blue">{mvParamsStats.total}</div><div className="kpi-sub">parâmetros</div></div>
+        <div className="kpi"><div className="kpi-label">Confirmado / Ajustado</div><div className="kpi-value" style={{color:'#16a34a'}}>{mvParamsStats.atualizados}</div><div className="kpi-sub">prontos</div></div>
+        <div className="kpi"><div className="kpi-label">A Avaliar</div><div className="kpi-value amber">{mvParamsStats.avaliar}</div><div className="kpi-sub">pendentes</div></div>
+        <div className="kpi"><div className="kpi-label">Bloqueantes</div><div className="kpi-value danger">{mvParamsStats.bloqueantes}</div><div className="kpi-sub">bloqueiam go-live</div></div>
+      </div>
+
+      {/* Filtros */}
+      <div style={{display:'flex',gap:10,marginBottom:20,flexWrap:'wrap',alignItems:'center'}}>
+        {[['todos','Todos'],['avaliar','A Avaliar'],['bloqueantes','Bloqueantes']].map(([f,l])=>(
+          <button key={f} onClick={()=>setFilter(f)} style={{
+            padding:'5px 14px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'DM Sans,sans-serif',
+            border:`1px solid ${filter===f?'var(--blue)':'var(--border)'}`,
+            background:filter===f?'var(--blue)':'var(--surface)',
+            color:filter===f?'white':'var(--ink-3)'
+          }}>{l}</button>
+        ))}
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar parâmetro…"
+          style={{padding:'5px 12px',borderRadius:6,border:'1px solid var(--border)',background:'var(--surface)',color:'var(--ink)',fontSize:12,fontFamily:'DM Sans,sans-serif',outline:'none',minWidth:200}}/>
+      </div>
+
+      {/* Tabela por grupo */}
+      {Object.entries(grupos).map(([grupo, params])=>{
+        const visible = params.filter(matchesFilter);
+        if(!visible.length) return null;
+        return (
+          <div key={grupo} className="card" style={{marginBottom:20}}>
+            <div className="card-header">
+              <div>
+                <div className="card-title">{grupo}</div>
+                <div className="card-subtitle">{visible.length} parâmetro{visible.length!==1?'s':''}</div>
+              </div>
+            </div>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <thead>
+                  <tr style={{borderBottom:'2px solid var(--border)'}}>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontWeight:700,color:'var(--ink-3)',fontSize:11,whiteSpace:'nowrap'}}>Parâmetro</th>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontWeight:700,color:'var(--ink-3)',fontSize:11}}>Descrição</th>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontWeight:700,color:'var(--ink-3)',fontSize:11,whiteSpace:'nowrap'}}>Valor Origem</th>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontWeight:700,color:'var(--ink-3)',fontSize:11,whiteSpace:'nowrap'}}>Status</th>
+                    <th style={{padding:'8px 12px',textAlign:'left',fontWeight:700,color:'var(--ink-3)',fontSize:11,whiteSpace:'nowrap'}}>Valor Novo</th>
+                    <th style={{padding:'8px 12px',textAlign:'center',fontWeight:700,color:'var(--ink-3)',fontSize:11}}>🔒</th>
+                    <th style={{padding:'8px 12px',textAlign:'center',fontWeight:700,color:'var(--ink-3)',fontSize:11,minWidth:70}}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((p,i)=>{
+                    const draft    = getDraft(p.mv_var);
+                    const dirty    = isDirty(p.mv_var);
+                    const saved    = mvParams[p.mv_var]||{};
+                    const sStyle   = statusStyle(draft.status);
+                    const metaTip  = fmtMeta(saved.updated_by, saved.updated_at);
+                    return (
+                      <tr key={p.mv_var} style={{borderBottom:'1px solid var(--border)',background:dirty?'rgba(59,130,246,0.04)':i%2===0?'transparent':'var(--surface-2,rgba(0,0,0,0.02))'}}>
+                        <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',fontWeight:600,fontSize:11,color:'var(--blue)',whiteSpace:'nowrap'}}>{p.mv_var}</td>
+                        <td style={{padding:'8px 12px',color:'var(--ink)',maxWidth:240}}>{p.descricao}</td>
+                        <td style={{padding:'8px 12px',fontFamily:'DM Mono,monospace',fontSize:11,color:'var(--ink-3)',maxWidth:160,wordBreak:'break-all'}}>
+                          {p.valor_origem||<span style={{opacity:0.35,fontStyle:'italic'}}>vazio</span>}
+                        </td>
+                        <td style={{padding:'8px 12px',whiteSpace:'nowrap'}}>
+                          <select value={draft.status} onChange={e=>handleDraft(p.mv_var,'status',e.target.value)}
+                            style={{fontSize:11,padding:'3px 6px',borderRadius:4,border:`1px solid ${dirty?'var(--blue)':'var(--border)'}`,background:sStyle.bg,color:sStyle.color,fontFamily:'DM Sans,sans-serif',fontWeight:600,cursor:'pointer'}}>
+                            {MV_STATUS_OPTS.map(s=><option key={s} value={s}>{s}</option>)}
+                          </select>
+                        </td>
+                        <td style={{padding:'8px 12px',minWidth:160}}>
+                          <div style={{position:'relative',display:'flex',alignItems:'center',gap:4}}>
+                            <input value={draft.valor_novo}
+                              onChange={e=>handleDraft(p.mv_var,'valor_novo',e.target.value)}
+                              placeholder="novo valor…"
+                              style={{fontSize:11,padding:'3px 8px',borderRadius:4,border:`1px solid ${dirty?'var(--blue)':'var(--border)'}`,background:'var(--surface)',color:'var(--ink)',fontFamily:'DM Mono,monospace',flex:1,minWidth:120,boxSizing:'border-box'}}/>
+                            {metaTip && !dirty && (
+                              <span title={metaTip} style={{cursor:'help',color:'var(--ink-4)',fontSize:13,flexShrink:0,lineHeight:1}}>ℹ</span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{padding:'8px 12px',textAlign:'center'}}>
+                          {p.bloqueante ? <span title="Bloqueante — deve ser resolvido antes do go-live" style={{color:'#dc2626',fontSize:14}}>●</span> : <span style={{color:'var(--ink-4)',fontSize:10}}>—</span>}
+                        </td>
+                        <td style={{padding:'6px 8px',textAlign:'center'}}>
+                          {dirty ? (
+                            <button onClick={()=>handleSave(p.mv_var)} style={{
+                              fontSize:11,padding:'4px 10px',borderRadius:5,border:'none',cursor:'pointer',fontFamily:'DM Sans,sans-serif',fontWeight:700,
+                              background:'var(--blue)',color:'white',whiteSpace:'nowrap'
+                            }}>Salvar</button>
+                          ) : saved.updated_at ? (
+                            <span style={{color:'var(--ink-4)',fontSize:18,lineHeight:1}} title={metaTip||''}>✓</span>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const App = () => {
   const [activeView, setActiveView] = useState('overview');
   const [catalogModule, setCatalogModule] = useState('');
@@ -1772,6 +1970,9 @@ const App = () => {
     try { return JSON.parse(localStorage.getItem('vinci_decisions')||'{}'); } catch(e) { return {}; }
   });
   const [decisionMeta, setDecisionMeta] = useState({});
+  const [mvParams, setMvParamsState] = useState(()=>{
+    try { return JSON.parse(localStorage.getItem('vinci_mvparams')||'{}'); } catch(e) { return {}; }
+  });
   const [currentUser, setCurrentUser]       = useState(null);
   const [authLoading, setAuthLoading]       = useState(true);
   const [needsPasswordSet, setNeedsPasswordSet] = useState(false);
@@ -1782,6 +1983,11 @@ const App = () => {
   useEffect(()=>{
     localStorage.setItem('vinci_decisions', JSON.stringify(decisions));
   },[decisions]);
+
+  // Persiste parâmetros no localStorage
+  useEffect(()=>{
+    localStorage.setItem('vinci_mvparams', JSON.stringify(mvParams));
+  },[mvParams]);
 
   // Aplica dark mode no <html> e persiste preferência
   useEffect(()=>{
@@ -1837,6 +2043,29 @@ const App = () => {
   // eslint-disable-next-line
   },[]);
 
+  // Carrega parâmetros MV do Supabase na montagem
+  useEffect(()=>{
+    if(!sb) return;
+    sb.from('mv_parameters').select('mv_var,status,valor_novo,responsavel,updated_by,updated_at')
+      .then(({data,error})=>{
+        if(error||!data||!data.length) return;
+        setMvParamsState(prev=>{
+          const next={...prev};
+          data.forEach(r=>{
+            next[r.mv_var]={
+              status:r.status,
+              valor_novo:r.valor_novo||'',
+              responsavel:r.responsavel||'',
+              updated_by:r.updated_by||'',
+              updated_at:r.updated_at||''
+            };
+          });
+          return next;
+        });
+      });
+  // eslint-disable-next-line
+  },[]);
+
   const upsertSb = async (path, decision) => {
     if(!sb) return;
     setSyncStatus('syncing');
@@ -1886,6 +2115,21 @@ const App = () => {
       if(!error) setDecisionMeta(prev=>{ const n={...prev}; ids.forEach(id=>{ n[id]={updated_by:by,updated_at:now}; }); return n; });
       setSyncStatus(error?'error':'ok');
     }
+  };
+
+  // fields = {status, valor_novo} — recebe o conjunto completo ao salvar
+  const setMvParam = async (mvVar, fields) => {
+    const now = new Date().toISOString();
+    const by  = currentUser?.user_metadata?.full_name||currentUser?.email||'anônimo';
+    setMvParamsState(prev=>{
+      const cur = prev[mvVar]||{};
+      return {...prev,[mvVar]:{...cur,...fields, updated_by:by, updated_at:now}};
+    });
+    if(!sb) return;
+    setSyncStatus('syncing');
+    const row = { mv_var:mvVar, ...fields, updated_at:now, updated_by:by };
+    const {error} = await sb.from('mv_parameters').upsert(row,{onConflict:'mv_var'});
+    setSyncStatus(error?'error':'ok');
   };
 
   const handleLogout = () => { sb.auth.signOut(); };
@@ -1941,15 +2185,31 @@ const App = () => {
     document.body.className = tweaks.theme==='dark'?'dark':'';
   },[tweaks.theme]);
 
+  const mvParamsStats = useMemo(()=>{
+    const all = window.PARAMETROS_DATA||[];
+    let atualizados=0, avaliar=0, excluir=0, bloqueantes=0;
+    all.forEach(p=>{
+      const saved  = mvParams[p.mv_var];
+      const rawSt  = saved?.status;
+      const status = MV_VALID_STATUSES.has(rawSt) ? rawSt : mapStatusInicial(p.status_inicial);
+      if(MV_STATUS_OK.has(status))         atualizados++;
+      else if(status==='Excluir')           excluir++;
+      else                                  avaliar++;
+      if(p.bloqueante && !MV_STATUS_OK.has(status) && status!=='Excluir') bloqueantes++;
+    });
+    return {atualizados, avaliar, excluir, bloqueantes, total:all.length};
+  },[mvParams]);
+
   const navItems = [
-    { id:'overview',  label:'Visão Geral',     icon:'overview', badge: null },
-    { id:'modules',   label:'Módulos',          icon:'modules',  badge: STATS.total_modulos },
-    { id:'hardcodes', label:'Hardcodes',        icon:'hardcode', badge: STATS.total_hardcodes_alta, badgeCls:'danger' },
-    { id:'catalog',   label:'Catálogo',         icon:'catalog',  badge: STATS.total_arquivos },
-    { id:'types',     label:'Tipos',            icon:'types',    badge: null },
-    { id:'decision',  label:'Decisão',          icon:'decision', badge: decisionStats.decided||null },
-    { id:'alertas',   label:'Qualidade',        icon:'alert',    badge: (window.ALERTAS_DATA||{}).total||null, badgeCls:'danger' },
-    { id:'issues',    label:'Issues',           icon:'issues',   badge: ISSUES.length || null },
+    { id:'overview',    label:'Visão Geral',     icon:'overview', badge: null },
+    { id:'modules',     label:'Módulos',          icon:'modules',  badge: STATS.total_modulos },
+    { id:'hardcodes',   label:'Hardcodes',        icon:'hardcode', badge: STATS.total_hardcodes_alta, badgeCls:'danger' },
+    { id:'catalog',     label:'Catálogo',         icon:'catalog',  badge: STATS.total_arquivos },
+    { id:'types',       label:'Tipos',            icon:'types',    badge: null },
+    { id:'decision',    label:'Decisão',          icon:'decision', badge: decisionStats.decided||null },
+    { id:'alertas',     label:'Qualidade',        icon:'alert',    badge: (window.ALERTAS_DATA||{}).total||null, badgeCls:'danger' },
+    { id:'issues',      label:'Issues',           icon:'issues',   badge: ISSUES.length || null },
+    { id:'parametros',  label:'Parâmetros',       icon:'config',   badge: mvParamsStats.bloqueantes||null, badgeCls:'danger' },
   ];
 
   const goToModule = mod => {
@@ -2046,8 +2306,9 @@ const App = () => {
         {activeView==='catalog'   && <CatalogView initialModule={catalogModule} initialCategoria={catalogCategoria} onClearCategoria={()=>setCatalogCategoria('')}/>}
         {activeView==='types'     && <TypesView/>}
         {activeView==='decision'  && <DecisionView decisions={decisions} decisionMeta={decisionMeta} setDecision={setDecision} bulkSet={bulkSet}/>}
-        {activeView==='alertas'   && <AlertasView/>}
-        {activeView==='issues'    && <IssuesView/>}
+        {activeView==='alertas'     && <AlertasView/>}
+        {activeView==='issues'      && <IssuesView/>}
+        {activeView==='parametros'  && <ParametrosView mvParams={mvParams} mvParamsStats={mvParamsStats} setMvParam={setMvParam} currentUser={currentUser}/>}
       </main>
 
       {/* TWEAKS PANEL */}
