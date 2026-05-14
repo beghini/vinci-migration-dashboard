@@ -1,10 +1,11 @@
-// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-14 15:30
+// Gerado automaticamente por export-issues-notion.ps1 em 2026-05-14 15:45
 // Fonte: Notion — Banco Chamados (Vinci) | 9 issues
 // NÃO editar manualmente — re-execute o script para atualizar.
 // Carregado por: deploy/index.html via <script src="issues.js">
 window.ISSUES_DATA = [
   {
     "id": "ISSUE-012",
+    "seq": "001",
     "titulo": "Queries multi-empresa (UNION ALL) em 28 fontes — tabelas empresas 02-08 inexistentes no TOTVS Cloud",
     "modulo": "SIGACOM, SIGAGPE, SIGACTB, SIGAFIN, SIGATEC",
     "tipo": "Sustentação",
@@ -17,6 +18,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-013",
+    "seq": "002",
     "titulo": "Encoding CP1252 nos fontes ADVPL — configurar .gitattributes e VS Code no repositório tsm-vinci",
     "modulo": "Infraestrutura / Repositório",
     "tipo": "Sustentação",
@@ -29,6 +31,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-014",
+    "seq": "003",
     "titulo": "Levantamento de Parâmetros SX6 (GETMV) — URLs, IPs e Endpoints a Revisar para Migração Cloud",
     "modulo": "Transversal (todos os módulos)",
     "tipo": "Sustentação",
@@ -41,6 +44,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-015",
+    "seq": "004",
     "titulo": "RPCSetEnv com empresa != '01' em 8 fontes — contexto de empresa inválido no TOTVS Cloud",
     "modulo": "SIGACOM, SIGACTB, SIGAEST, SIGAGPE",
     "tipo": "Sustentação",
@@ -53,6 +57,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-016",
+    "seq": "005",
     "titulo": "Campos no fonte sem correspondência no SX3/banco — rastreamento contínuo até go-live",
     "modulo": "SIGACOM",
     "tipo": "Sustentação",
@@ -65,6 +70,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-018",
+    "seq": "006",
     "titulo": "Identificar relatórios que utilizam acesso via VIEW",
     "modulo": "SIGACOM, SIGAFIN",
     "tipo": "Sustentação",
@@ -77,6 +83,7 @@ window.ISSUES_DATA = [
   },
   {
     "id": "ISSUE-020",
+    "seq": "007",
     "titulo": "Desativar rotinas de replicação multi-empresa (WIZCADSA2, MATA020_PE, MATA010_PE)",
     "modulo": "SIGATEC / SIGACOM",
     "tipo": "Sustentação",
@@ -88,19 +95,8 @@ window.ISSUES_DATA = [
     "complexidade": "Baixa"
   },
   {
-    "id": "ISSUE-022",
-    "titulo": "Exclusão automática do item contábil (CTD) ao excluir o fornecedor/cliente",
-    "modulo": "SIGACOM / SIGAFIN",
-    "tipo": "Inovação",
-    "status": "Concluído",
-    "status_notion": "Concluído",
-    "prioridade": "Normal",
-    "descricao": "Ao excluir um fornecedor ou cliente, o registro CTD associado (chave F+cod+loja ou C+cod+loja) não era removido. Ao recriar o mesmo código+loja, MA020TOK/MA030TOK geravam chave duplicada no CTD.",
-    "observacoes": "Concluído. Commit 2a3dca2 em develop (14/05/2026). MATA020_PE.prw e CRMA980_MVC.prw alterados com exclusão automática do CTD ao excluir fornecedor/cliente.",
-    "complexidade": "Baixa"
-  },
-  {
     "id": "ISSUE-021",
+    "seq": "008",
     "titulo": "Ajustes endpoint para integração Solicitação e Pedido de Compras com o Fluig",
     "modulo": "SIGACOM",
     "tipo": "Sustentação",
@@ -110,5 +106,18 @@ window.ISSUES_DATA = [
     "descricao": "Com a migração para o novo ambiente TOTVS Cloud dedicado, os endpoints de integração com o Fluig precisam ser validados e ajustados. As rotinas M110STTS (PE pós-gravação da SC) e MT120FIM (PE pós-finalização do PC) realizam chamadas SOAP ao ECMWorkflowEngineService do Fluig para iniciar e cancelar processos de aprovação.",
     "observacoes": "Concluído. bNoCheckPeerCert := .T. inserido nos 5 pontos de instanciação de TWsdlManager em M110STTS.prw e MT120FIM.PRW. Validado no ambiente PROTO.",
     "complexidade": "Média"
+  },
+  {
+    "id": "ISSUE-022",
+    "seq": "009",
+    "titulo": "Exclusão automática do item contábil (CTD) ao excluir o fornecedor/cliente",
+    "modulo": "SIGACOM / SIGAFIN",
+    "tipo": "Inovação",
+    "status": "Concluído",
+    "status_notion": "Concluído",
+    "prioridade": "Normal",
+    "descricao": "Ao excluir um fornecedor ou cliente, o registro CTD associado (chave F+cod+loja ou C+cod+loja) não era removido. Ao recriar o mesmo código+loja, MA020TOK/MA030TOK geravam chave duplicada no CTD.",
+    "observacoes": "Concluído. Commit 2a3dca2 em develop (14/05/2026). MATA020_PE.prw e CRMA980_MVC.prw alterados com exclusão automática do CTD ao excluir fornecedor/cliente.",
+    "complexidade": "Baixa"
   }
 ];

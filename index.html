@@ -1095,7 +1095,7 @@ const IssuesView = () => {
   const filtered = useMemo(()=>{
     const q = search.toLowerCase();
     return ISSUES.filter(i=>{
-      if(q && !((i.id||'').toLowerCase().includes(q) || (i.titulo||'').toLowerCase().includes(q) || (i.descricao||'').toLowerCase().includes(q))) return false;
+      if(q && !((i.seq||'').includes(q) || (i.id||'').toLowerCase().includes(q) || (i.titulo||'').toLowerCase().includes(q) || (i.descricao||'').toLowerCase().includes(q))) return false;
       if(fStatus && i.status !== fStatus) return false;
       if(fMod && i.modulo !== fMod) return false;
       if(fTipo && i.tipo !== fTipo) return false;
@@ -1224,7 +1224,7 @@ const IssuesView = () => {
               return (
                 <React.Fragment key={i.id}>
                   <tr className={`data-row${isOpen?' expanded':''}`} onClick={()=>toggleExpand(i.id)}>
-                    <td><span className="issue-id">{i.id}</span></td>
+                    <td><span className="issue-id" title={i.id}>{i.seq || i.id}</span></td>
                     <td>
                       <div style={{display:'flex',alignItems:'center',gap:8}}>
                         <span className="chevron"><Icon name="chevron" size={11}/></span>
